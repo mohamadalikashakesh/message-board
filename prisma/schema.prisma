@@ -10,6 +10,73 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+// Users Table
+model User {
+  user_id    Int      @id @default(autoincrement())
+  user_name  String   @db.VarChar(100)
+  dob        DateTime?
+  country    String?  @db.VarChar(100)
+  account    Account? @relation // Removed the fields and references from here
+  bannedUsers BannedUser[]
+}
+
+// Accounts Table
+model Account {
+  user_id   Int      @id
+  email     String   @db.VarChar(255)
+  pass      String   @db.VarChar(255)
+  role      Role     @default(user)
+  user      User     @relation(fields: [user_id], references: [user_id])  // Defined here with fields and references
+  boards    Board[]  @relation("BoardAdmin")
+  messages  Message[]
+}
+
+// Role Enum
+enum Role {
+  admin
+  user
+}
+
+// Boards Table
+model Board {
+  board_id   Int      @id @default(autoincrement())
+  board_name String   @db.VarChar(255)
+  board_admin Int
+  board_public Boolean @default(true)
+  status     BoardStatus @default(active)
+  admin      Account  @relation("BoardAdmin", fields: [board_admin], references: [user_id])
+  messages   Message[]
+  bannedUsers BannedUser[]
+}
+
+// BoardStatus Enum
+enum BoardStatus {
+  active
+  frozen
+}
+
+// BannedUsers Table
+model BannedUser {
+  board_id Int
+  user_id  Int
+  board    Board  @relation(fields: [board_id], references: [board_id], onDelete: Cascade)
+  user     User   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@id([board_id, user_id])
+}
+
+// Messages Table
+model Message {
+  message_id Int      @id @default(autoincrement())
+  board_id   Int
+  user_ids   String   // Store as a string since Prisma doesn't support array or JSON types for this field type directly.
+  admin_id   Int
+  message_text String
+  timestamp  DateTime @default(now())
+  board      Board    @relation(fields: [board_id], references: [board_id])
+  admin      Account  @relation(fields: [admin_id], references: [user_id])
 }
