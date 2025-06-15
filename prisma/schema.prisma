@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -14,69 +7,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Users Table
-model User {
-  user_id    Int      @id @default(autoincrement())
-  user_name  String   @db.VarChar(100)
-  dob        DateTime?
-  country    String?  @db.VarChar(100)
-  account    Account? @relation // Removed the fields and references from here
-  bannedUsers BannedUser[]
+model account {
+  user_id Int          @id
+  email   String       @unique(map: "Account_email_key") @db.VarChar(255)
+  pass    String       @db.VarChar(255)
+  role    account_role @default(user)
+  user    user         @relation(fields: [user_id], references: [user_id], map: "Account_user_id_fkey")
+  board   board[]
+  message message[]
 }
 
-// Accounts Table
-model Account {
-  user_id   Int      @id
-  email     String   @db.VarChar(255)
-  pass      String   @db.VarChar(255)
-  role      Role     @default(user)
-  user      User     @relation(fields: [user_id], references: [user_id])  // Defined here with fields and references
-  boards    Board[]  @relation("BoardAdmin")
-  messages  Message[]
-}
-
-// Role Enum
-enum Role {
-  admin
-  user
-}
-
-// Boards Table
-model Board {
-  board_id   Int      @id @default(autoincrement())
-  board_name String   @db.VarChar(255)
-  board_admin Int
-  board_public Boolean @default(true)
-  status     BoardStatus @default(active)
-  admin      Account  @relation("BoardAdmin", fields: [board_admin], references: [user_id])
-  messages   Message[]
-  bannedUsers BannedUser[]
-}
-
-// BoardStatus Enum
-enum BoardStatus {
-  active
-  frozen
-}
-
-// BannedUsers Table
-model BannedUser {
+model banneduser {
   board_id Int
   user_id  Int
-  board    Board  @relation(fields: [board_id], references: [board_id], onDelete: Cascade)
-  user     User   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  board    board @relation(fields: [board_id], references: [board_id], onDelete: Cascade, map: "BannedUser_board_id_fkey")
+  user     user  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "BannedUser_user_id_fkey")
 
   @@id([board_id, user_id])
+  @@index([user_id], map: "BannedUser_user_id_fkey")
 }
 
-// Messages Table
-model Message {
-  message_id Int      @id @default(autoincrement())
-  board_id   Int
-  user_ids   String   // Store as a string since Prisma doesn't support array or JSON types for this field type directly.
-  admin_id   Int
+model board {
+  board_id     Int           @id @default(autoincrement())
+  board_name   String        @db.VarChar(255)
+  board_admin  Int
+  board_public Boolean       @default(true)
+  status       board_status  @default(active)
+  banneduser   banneduser[]
+  account      account       @relation(fields: [board_admin], references: [user_id], map: "Board_board_admin_fkey")
+  boardmember  boardmember[]
+  message      message[]
+
+  @@index([board_admin], map: "Board_board_admin_fkey")
+}
+
+model boardmember {
+  board_id  Int
+  user_id   Int
+  joined_at DateTime @default(now())
+  board     board    @relation(fields: [board_id], references: [board_id], onDelete: Cascade, map: "BoardMember_board_id_fkey")
+  user      user     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "BoardMember_user_id_fkey")
+
+  @@id([board_id, user_id])
+  @@index([user_id], map: "BoardMember_user_id_fkey")
+}
+
+model message {
+  message_id   Int      @id @default(autoincrement())
+  board_id     Int
+  user_ids     String
+  admin_id     Int
   message_text String
-  timestamp  DateTime @default(now())
-  board      Board    @relation(fields: [board_id], references: [board_id])
-  admin      Account  @relation(fields: [admin_id], references: [user_id])
+  timestamp    DateTime @default(now())
+  account      account  @relation(fields: [admin_id], references: [user_id], map: "Message_admin_id_fkey")
+  board        board    @relation(fields: [board_id], references: [board_id], map: "Message_board_id_fkey")
+
+  @@index([admin_id], map: "Message_admin_id_fkey")
+  @@index([board_id], map: "Message_board_id_fkey")
+}
+
+model user {
+  user_id     Int           @id @default(autoincrement())
+  user_name   String        @db.VarChar(100)
+  dob         DateTime?
+  country     String?       @db.VarChar(100)
+  account     account?
+  banneduser  banneduser[]
+  boardmember boardmember[]
+}
+
+enum account_role {
+  admin
+  user
+  master
+}
+
+enum board_status {
+  active
+  frozen
 }
