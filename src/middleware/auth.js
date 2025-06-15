@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { prisma, config } from '../config/index.js';
-import bcrypt from 'bcrypt';
+
 
 //Generate JWT token
 const generateToken = (userData) => {

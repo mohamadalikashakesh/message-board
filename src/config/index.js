@@ -29,3 +29,27 @@ try {
   console.error('Failed to initialize Prisma client:', error);
   process.exit(1);
 }
+// Application configuration
+const config = {
+  // Server configuration
+  port: process.env.PORT || 3000,
+  nodeEnv: process.env.NODE_ENV || 'development',
+
+  // JWT configuration
+  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
+
+  // Rate limiting
+  rateLimitWindow: 15 * 60 * 1000, // 15 minutes
+  rateLimitMax: 100, // 100 requests per window
+};
+
+// Handle process termination
+process.on('beforeExit', async () => {
+  if (prisma) {
+    await prisma.$disconnect();
+    console.log('Disconnected from database');
+  }
+});
+
+export { prisma, config }; 
