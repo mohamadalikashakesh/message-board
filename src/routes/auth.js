@@ -2,19 +2,33 @@ import express from 'express';
 import { prisma } from '../config/index.js';
 import bcrypt from 'bcrypt';
 import { authLimiter } from '../middleware/rateLimiter.js';
-import { authenticateToken, generateToken } from '../middleware/auth.js';
+import { authenticateToken, generateToken , requireRole } from '../middleware/auth.js';
+import { validateDisplayName , validateEmail , validatePassword , validateDateOfBirth , calculateAge } from '../validators/auth.js';
 
 const router = express.Router();
 
+// Add detailed route logging
+router.use((req, res, next) => {
+  console.log(`Auth Route: ${req.method} ${req.path}`);
+  console.log('Request body:', req.body);
+  next();
+});
+
+// Test route
 router.get('/', (req, res) => {
+  console.log('Root auth route hit');
   res.send('Authentication!');
 });
 
-// User Registration 
-
+/**
+ * User Registration
+ * POST /api/auth/register
+ */
 router.post('/register', async (req, res) => {
+  console.log('Register route hit');
   try {
     const { email, password, displayName, dateOfBirth, country } = req.body;
+    console.log('Registration attempt:', { email, displayName, country });
 
     // Validate input
     const validatedEmail = validateEmail(email);
@@ -66,8 +80,10 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// User Login
-
+/**
+ * User Login
+ * POST /api/auth/login
+ */
 router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -127,8 +143,10 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 });
 
-//Master User Login 
-
+/**
+ * Master User Login
+ * POST /api/auth/master/login
+ */
 router.post('/master/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -182,6 +200,88 @@ router.post('/master/login', authLimiter, async (req, res) => {
   } catch (error) {
     console.error('Master login error:', error);
     res.status(400).json({ error: error.message || 'Invalid input data' });
+  }
+});
+
+/**
+ * Get Current User Profile
+ * GET /api/auth/me
+ */
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const account = await prisma.account.findUnique({
+      where: { user_id: req.user.userId },
+      include: {
+        user: true,
+        board: true
+      }
+    });
+
+    if (!account) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const age = account.user.dob ? calculateAge(account.user.dob) : 0;
+    const isBoardAdmin = account.board.length > 0;
+
+    res.json({
+      userId: account.user_id,
+      email: account.email,
+      role: account.role,
+      displayName: account.user.user_name,
+      age,
+      country: account.user.country || '',
+      dateJoined: account.user.created_at || new Date(),
+      isBoardAdmin
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+/**
+ * Update User Profile
+ * PUT /api/auth/me
+ */
+router.put('/me', authenticateToken, async (req, res) => {
+  try {
+    const { displayName, dateOfBirth, country } = req.body;
+
+    // Validate input
+    const validatedDisplayName = displayName ? validateDisplayName(displayName) : undefined;
+    const dob = dateOfBirth ? validateDateOfBirth(dateOfBirth) : undefined;
+
+    const account = await prisma.account.findUnique({
+      where: { user_id: req.user.userId },
+      include: { user: true }
+    });
+
+    if (!account) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { user_id: account.user_id },
+      data: {
+        user_name: validatedDisplayName,
+        dob,
+        country
+      }
+    });
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        userId: updatedUser.user_id,
+        displayName: updatedUser.user_name,
+        age: updatedUser.dob ? calculateAge(updatedUser.dob) : 0,
+        country: updatedUser.country || ''
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(400).json({ error: error.message || 'Failed to update profile' });
   }
 });
 
