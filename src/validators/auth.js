@@ -1,177 +1,131 @@
-import express from 'express';
-import { prisma } from '../config/index.js';
-import bcrypt from 'bcrypt';
-import { authLimiter } from '../middleware/rateLimiter.js';
-import { authenticateToken, generateToken } from '../middleware/auth.js';
+// import express from 'express';
+// import { prisma } from '../config/index.js';
+// import bcrypt from 'bcrypt';
+// import { authLimiter } from '../middleware/rateLimiter.js';
+// import { authenticateToken, generateToken } from '../middleware/auth.js';
 
 
 // Validation functions
-const validateEmail = (email) => {
+/**
+ * Validates an email address
+ * @param {string} email - The email to validate
+ * @returns {string} The validated email
+ * @throws {Error} If email is invalid
+ */
+export function validateEmail(email) {
   if (!email) {
     throw new Error('Email is required');
   }
-  
-  // Trim whitespace and convert to lowercase
-  const trimmedEmail = email.trim().toLowerCase();
-  
-  // Basic email format validation
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if (!emailRegex.test(trimmedEmail)) {
-    throw new Error('Please enter a valid email address');
-  }
-  
-  return trimmedEmail;
-};
 
-const validatePassword = (password) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new Error('Invalid email format');
+  }
+
+  return email.toLowerCase().trim();
+}
+
+/**
+ * Validates a password
+ * @param {string} password - The password to validate
+ * @returns {string} The validated password
+ * @throws {Error} If password is invalid
+ */
+export function validatePassword(password) {
   if (!password) {
     throw new Error('Password is required');
   }
-  if (password.length < 6) {
-    throw new Error('Password must be at least 6 characters long');
-  }
-  return password;
-};
 
-const validateDisplayName = (displayName) => {
+  if (password.length < 8) {
+    throw new Error('Password must be at least 8 characters long');
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    throw new Error('Password must contain at least one uppercase letter');
+  }
+
+  if (!/[a-z]/.test(password)) {
+    throw new Error('Password must contain at least one lowercase letter');
+  }
+
+  if (!/[0-9]/.test(password)) {
+    throw new Error('Password must contain at least one number');
+  }
+
+  return password;
+}
+
+/**
+ * Validates a display name
+ * @param {string} displayName - The display name to validate
+ * @returns {string} The validated display name
+ * @throws {Error} If display name is invalid
+ */
+export function validateDisplayName(displayName) {
   if (!displayName) {
     throw new Error('Display name is required');
   }
-  if (displayName.length < 3) {
-    throw new Error('Display name must be at least 3 characters long');
+
+  if (displayName.length < 2) {
+    throw new Error('Display name must be at least 2 characters long');
   }
+
   if (displayName.length > 50) {
     throw new Error('Display name must be less than 50 characters');
   }
+
   return displayName.trim();
-};
+}
 
-const validateDateOfBirth = (dob) => {
-  if (!dob) return null;
-  const date = new Date(dob);
+/**
+ * Validates a date of birth
+ * @param {string} dateOfBirth - The date of birth to validate (YYYY-MM-DD format)
+ * @returns {Date} The validated date of birth
+ * @throws {Error} If date of birth is invalid
+ */
+export function validateDateOfBirth(dateOfBirth) {
+  if (!dateOfBirth) {
+    throw new Error('Date of birth is required');
+  }
+
+  const date = new Date(dateOfBirth);
   if (isNaN(date.getTime())) {
-    throw new Error('Invalid date of birth format');
+    throw new Error('Invalid date format. Use YYYY-MM-DD');
   }
+
+  const today = new Date();
+  const age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+    age--;
+  }
+
+  if (age < 13) {
+    throw new Error('Must be at least 13 years old');
+  }
+
+  if (age > 120) {
+    throw new Error('Invalid date of birth');
+  }
+
   return date;
-};
+}
 
-// User Registration 
-
-router.post('/register', async (req, res) => {
-  try {
-    const { email, password, displayName, dateOfBirth, country } = req.body;
-
-    // Validate input
-    const validatedEmail = validateEmail(email);
-    const validatedPassword = validatePassword(password);
-    const validatedDisplayName = validateDisplayName(displayName);
-    const dob = validateDateOfBirth(dateOfBirth);
-
-    const existingUser = await prisma.account.findFirst({
-      where: { email: validatedEmail }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    const hashedPassword = await bcrypt.hash(validatedPassword, 10);
-
-    //creates a database transaction to ensure that both the user and account are created atomically
-    //  (either both succeed, or neither does).
-    const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          user_name: validatedDisplayName,
-          dob,
-          country
-        }
-      });
-
-      const account = await tx.account.create({
-        data: {
-          user_id: user.user_id,
-          email: validatedEmail,
-          pass: hashedPassword,
-          role: 'user'
-        }
-      });
-
-      return { user, account };
-    });
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      userId: result.user.user_id
-    });
-    //Error Handling
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
+/**
+ * Calculates age from date of birth
+ * @param {Date} dateOfBirth - The date of birth
+ * @returns {number} The calculated age
+ */
+export function calculateAge(dateOfBirth) {
+  const today = new Date();
+  const age = today.getFullYear() - dateOfBirth.getFullYear();
+  const monthDiff = today.getMonth() - dateOfBirth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateOfBirth.getDate())) {
+    return age - 1;
   }
-});
+  
+  return age;
+}
 
-// User Login
-
-router.post('/login', authLimiter, async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // Validate input
-    const validatedEmail = validateEmail(email);
-    const validatedPassword = validatePassword(password);
-
-    const account = await prisma.account.findFirst({
-      where: { email: validatedEmail },
-      include: {
-        user: true,
-        board: true
-      }
-    });
-
-    if (!account) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const isValidPassword = await bcrypt.compare(validatedPassword, account.pass);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const age = account.user.dob ? calculateAge(account.user.dob) : 0;
-    const isBoardAdmin = account.board.length > 0;
-
-    const userData = {
-      userId: account.user_id,
-      email: account.email,
-      role: account.role,
-      displayName: account.user.user_name,
-      age,
-      country: account.user.country || '',
-      dateJoined: account.user.created_at || new Date(),
-      isBoardAdmin
-    };
-
-    //authenticating
-    const token = generateToken(userData);
-
-    res.json({
-      message: 'Login successful',
-      token,
-      user: userData
-    });
-
-    // Error Handling
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
-  }
-});
-
-
-
-const router = express.Router();
