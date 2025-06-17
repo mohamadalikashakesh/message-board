@@ -258,4 +258,86 @@ router.put('/boards/:boardId', masterAuth, async (req, res) => {
   }
 });
 
+/**
+ * Ban user from a board
+ * POST /api/master/boards/:boardId/ban/:userId
+ */
+router.post('/boards/:boardId/ban/:userId', masterAuth, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    const userId = parseInt(req.params.userId);
+
+    if (isNaN(boardId) || isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid board ID or user ID' });
+    }
+
+    // Check if user is already banned
+    const existingBan = await prisma.banneduser.findFirst({
+      where: {
+        board_id: boardId,
+        user_id: userId
+      }
+    });
+
+    if (existingBan) {
+      return res.status(400).json({ error: 'User is already banned from this board' });
+    }
+
+    // Create the ban
+    await prisma.banneduser.create({
+      data: {
+        board_id: boardId,
+        user_id: userId
+      }
+    });
+
+    res.json({ message: 'User banned from board successfully' });
+  } catch (error) {
+    console.error('Error banning user:', error);
+    res.status(500).json({ error: 'Failed to ban user' });
+  }
+});
+
+/**
+ * Unban user from a board
+ * DELETE /api/master/boards/:boardId/ban/:userId
+ */
+router.delete('/boards/:boardId/ban/:userId', masterAuth, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    const userId = parseInt(req.params.userId);
+
+    if (isNaN(boardId) || isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid board ID or user ID' });
+    }
+
+    // Check if ban exists
+    const ban = await prisma.banneduser.findFirst({
+      where: {
+        board_id: boardId,
+        user_id: userId
+      }
+    });
+
+    if (!ban) {
+      return res.status(404).json({ error: 'User is not banned from this board' });
+    }
+
+    // Remove the ban
+    await prisma.banneduser.delete({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: userId
+        }
+      }
+    });
+
+    res.json({ message: 'User unbanned from board successfully' });
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    res.status(500).json({ error: 'Failed to unban user' });
+  }
+});
+
 export default router;

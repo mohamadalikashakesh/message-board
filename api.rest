@@ -38,33 +38,6 @@ Content-Type: application/json
     "country": "Beirut"
 }
 
-### Master user login
-# @name masterLogin
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-    "email": "master@example.com",
-    "password": "Master123"
-}
-### Get all users (requires master access)
-GET {{baseUrl}}/master/users
-Authorization: Bearer {{masterToken}}
-
-### Update user profile (requires master access)
-PUT {{baseUrl}}/master/users/9
-Authorization: Bearer {{masterToken}}
-Content-Type: application/json
-
-{
-    "userId": "9",
-    "email": "email@updatedby.master",
-    "role": "user",
-    "displayName": "by mr master",
-    "country": "Jbeil",
-    "password": "masterChangedPa33",
-    "dateOfBirth": "2025-05-05"
-}
 ### Create a new board (requires authentication)
 POST {{baseUrl}}/boards
 Authorization: Bearer {{authToken}}
@@ -117,6 +90,33 @@ Content-Type: application/json
 GET {{baseUrl}}/boards/19/members
 Authorization: Bearer {{authToken}}
 
+### Master user login
+# @name masterLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "master@example.com",
+    "password": "Master123"
+}
+### Get all users (requires master access)
+GET {{baseUrl}}/master/users
+Authorization: Bearer {{masterToken}}
+
+### Update user profile (requires master access)
+PUT {{baseUrl}}/master/users/9
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
+
+{
+    "userId": "9",
+    "email": "email@updatedby.master",
+    "role": "user",
+    "displayName": "by mr master",
+    "country": "Jbeil",
+    "password": "masterChangedPa33",
+    "dateOfBirth": "2025-05-05"
+}
 ### Get all boards (master only)
 GET {{baseUrl}}/master/boards
 Authorization: Bearer {{masterToken}}
@@ -132,3 +132,16 @@ Content-Type: application/json
     "status": "active",
     "adminId": 1
 }
+
+### Ban user from board (requires master access)
+POST {{baseUrl}}/master/boards/20/ban/10
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
+
+{
+    "reason": "Violation of community guidelines"
+}
+
+### Unban user from board (requires master access)
+DELETE {{baseUrl}}/master/boards/20/ban/10
+Authorization: Bearer {{masterToken}}
