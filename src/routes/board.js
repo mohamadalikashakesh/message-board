@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, requireBoardAdmin } from '../middleware/auth.js';
 import { validateBoardTitle, validateBoardDescription, validateMessageContent } from '../validators/board.js';
+import { calculateAge } from '../validators/auth.js';
 import { prisma } from '../config/index.js';
 
 const router = express.Router();
@@ -362,6 +363,78 @@ router.post('/:boardId/members', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error adding board member:', error);
     res.status(500).json({ error: 'Failed to add board member' });
+  }
+});
+
+/**
+ * Get board members information
+ * GET /api/boards/:boardId/members
+ */
+router.get('/:boardId/members', authenticateToken, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    if (isNaN(boardId)) {
+      return res.status(400).json({ error: 'Invalid board ID' });
+    }
+
+    // Check if board exists
+    const board = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    // Check if user is a member of the board
+    const isMember = await prisma.boardmember.findUnique({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: req.user.userId
+        }
+      }
+    });
+
+    if (!isMember && board.board_admin !== req.user.userId) {
+      return res.status(403).json({ error: 'You must be a member of this board to view its members' });
+    }
+
+    // Get all board members with their user information
+    const members = await prisma.boardmember.findMany({
+      where: {
+        board_id: boardId
+      },
+      include: {
+        user: {
+          select: {
+            user_name: true,
+            dob: true,
+            country: true
+          }
+        }
+      },
+      orderBy: {
+        joined_at: 'asc'
+      }
+    });
+
+    // Format the response
+    const formattedMembers = members.map(member => ({
+      displayName: member.user.user_name,
+      age: member.user.dob ? calculateAge(member.user.dob) : null,
+      country: member.user.country,
+      dateJoined: member.joined_at,
+      isAdmin: member.user_id === board.board_admin
+    }));
+
+    res.json({
+      boardName: board.board_name,
+      members: formattedMembers
+    });
+  } catch (error) {
+    console.error('Error fetching board members:', error);
+    res.status(500).json({ error: 'Failed to fetch board members' });
   }
 });
 

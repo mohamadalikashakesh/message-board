@@ -71,17 +71,17 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "title": "Board 2",
+    "title": "Board 5",
     "description": "A test board",
     "isPrivate": false
 }
 ### Update a board (requires board admin)
-PUT {{baseUrl}}/boards/19
+PUT {{baseUrl}}/boards/20
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "title": "Updated Board",
+    "title": "new name",
     "description": "Updated description",
     "isPrivate": true
 }
@@ -112,3 +112,7 @@ Content-Type: application/json
 {
     "userId": 10
 }
+
+### Get board members information (requires board membership)
+GET {{baseUrl}}/boards/18/members
+Authorization: Bearer {{authToken}}
