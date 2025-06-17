@@ -1,7 +1,4 @@
-import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-
-dotenv.config();
 
 // Database configuration
 let prisma;
@@ -34,10 +31,6 @@ const config = {
   // Server configuration
   port: process.env.PORT || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
-
-  // JWT configuration
-  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
 
   // Rate limiting
   rateLimitWindow: 15 * 60 * 1000, // 15 minutes
