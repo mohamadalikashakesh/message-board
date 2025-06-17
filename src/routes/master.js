@@ -122,5 +122,140 @@ router.put('/users/:userId', masterAuth, async (req, res) => {
   }
 });
 
+/**
+ * Get all boards
+ * GET /api/master/boards
+ */
+router.get('/boards', masterAuth, async (req, res) => {
+  try {
+    const boards = await prisma.board.findMany({
+      include: {
+        account: {
+          select: {
+            user: {
+              select: {
+                user_name: true,
+                country: true
+              }
+            }
+          }
+        },
+        boardmember: {
+          select: {
+            user: {
+              select: {
+                user_name: true
+              }
+            }
+          }
+        },
+        message: {
+          select: {
+            message_id: true
+          }
+        }
+      },
+      orderBy: {
+        board_id: 'desc'
+      }
+    });
+
+    res.json(boards.map(board => ({
+      id: board.board_id,
+      name: board.board_name,
+      isPublic: board.board_public,
+      status: board.status,
+      admin: {
+        id: board.board_admin,
+        name: board.account.user.user_name,
+        country: board.account.user.country
+      },
+      memberCount: board.boardmember.length,
+      messageCount: board.message.length,
+      members: board.boardmember.map(member => ({
+        name: member.user.user_name
+      }))
+    })));
+  } catch (error) {
+    console.error('Error fetching boards:', error);
+    res.status(500).json({ error: 'Failed to fetch boards' });
+  }
+});
+
+/**
+ * Update board
+ * PUT /api/master/boards/:boardId
+ */
+router.put('/boards/:boardId', masterAuth, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    const { name, isPublic, status, adminId } = req.body;
+
+    if (isNaN(boardId)) {
+      return res.status(400).json({ error: 'Invalid board ID' });
+    }
+
+    // Check if board exists
+    const existingBoard = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!existingBoard) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    // If changing admin, verify the new admin exists
+    if (adminId) {
+      const newAdmin = await prisma.account.findUnique({
+        where: { user_id: adminId }
+      });
+
+      if (!newAdmin) {
+        return res.status(400).json({ error: 'New admin user not found' });
+      }
+    }
+
+    // Update board
+    const updatedBoard = await prisma.board.update({
+      where: { board_id: boardId },
+      data: {
+        board_name: name,
+        board_public: isPublic,
+        status,
+        board_admin: adminId
+      },
+      include: {
+        account: {
+          select: {
+            user: {
+              select: {
+                user_name: true,
+                country: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Board updated successfully',
+      board: {
+        id: updatedBoard.board_id,
+        name: updatedBoard.board_name,
+        isPublic: updatedBoard.board_public,
+        status: updatedBoard.status,
+        admin: {
+          id: updatedBoard.board_admin,
+          name: updatedBoard.account.user.user_name,
+          country: updatedBoard.account.user.country
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error updating board:', error);
+    res.status(500).json({ error: 'Failed to update board' });
+  }
+});
 
 export default router;

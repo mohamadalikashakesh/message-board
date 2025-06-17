@@ -114,5 +114,21 @@ Content-Type: application/json
 }
 
 ### Get board members information (requires board membership)
-GET {{baseUrl}}/boards/18/members
+GET {{baseUrl}}/boards/19/members
 Authorization: Bearer {{authToken}}
+
+### Get all boards (master only)
+GET {{baseUrl}}/master/boards
+Authorization: Bearer {{masterToken}}
+
+### Update board (master only)
+PUT {{baseUrl}}/master/boards/19
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
+
+{
+    "name": "Updated Board Name",
+    "isPublic": true,
+    "status": "active",
+    "adminId": 1
+}
