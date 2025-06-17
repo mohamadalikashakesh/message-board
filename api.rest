@@ -7,8 +7,8 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "test5@example.com",
-    "password": "Password12345",
+    "email": "test6@example.com",
+    "password": "Password123456",
     "displayName": "Test User",
     "dateOfBirth": "2000-01-01",
     "country": "Saida"
@@ -20,8 +20,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test3@example.com",
-    "password": "Password1234"
+    "email": "test@example.com",
+    "password": "Password123"
 }
 ### Get current user profile (requires authentication)
 GET {{baseUrl}}/auth/me
@@ -76,7 +76,7 @@ Content-Type: application/json
     "isPrivate": false
 }
 ### Update a board (requires board admin)
-PUT {{baseUrl}}/boards/11
+PUT {{baseUrl}}/boards/19
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -93,13 +93,22 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/boards
 
 ### Join a board (requires authentication)
-POST {{baseUrl}}/boards/17/join
+POST {{baseUrl}}/boards/19/join
 Authorization: Bearer {{authToken}}
 
 ### Leave a board (requires authentication)
-DELETE {{baseUrl}}/boards/17/join
+DELETE {{baseUrl}}/boards/19/join
 Authorization: Bearer {{authToken}}
 
 ### Get all boards that the user has joined (requires authentication)
 GET {{baseUrl}}/boards/joined
 Authorization: Bearer {{authToken}}
+
+### Add member to private board (board admin only)
+POST {{baseUrl}}/boards/19/members
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "userId": 10
+}

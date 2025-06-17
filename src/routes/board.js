@@ -152,7 +152,7 @@ router.post('/:boardId/join', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid board ID' });
     }
 
-    // Check if board exists and is active
+    // Check if board exists
     const board = await prisma.board.findUnique({
       where: { board_id: boardId }
     });
@@ -160,6 +160,7 @@ router.post('/:boardId/join', authenticateToken, async (req, res) => {
     if (!board) {
       return res.status(404).json({ error: 'Board not found' });
     }
+
     // Check if user is already a member
     const existingMembership = await prisma.boardmember.findUnique({
       where: {
@@ -173,6 +174,17 @@ router.post('/:boardId/join', authenticateToken, async (req, res) => {
     if (existingMembership) {
       return res.status(400).json({ error: 'You are already a member of this board' });
     }
+
+    // If board is private, check if user is admin
+    if (!board.board_public) {
+      if (board.board_admin !== req.user.userId) {
+        return res.status(403).json({ 
+          error: 'This is a private board. Only the board admin can add members.',
+          message: 'Please contact the board admin to request access.'
+        });
+      }
+    }
+
     // Create board membership
     const membership = await prisma.boardmember.create({
       data: {
@@ -288,6 +300,68 @@ router.get('/joined', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching joined boards:', error);
     res.status(500).json({ error: 'Failed to fetch joined boards' });
+  }
+});
+
+/**
+ * Add member to private board (board admin only)
+ * POST /api/boards/:boardId/members
+ */
+router.post('/:boardId/members', authenticateToken, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    const { userId } = req.body;
+
+    if (isNaN(boardId) || !userId) {
+      return res.status(400).json({ error: 'Invalid board ID or user ID' });
+    }
+
+    // Check if board exists and user is admin
+    const board = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    if (board.board_admin !== req.user.userId) {
+      return res.status(403).json({ error: 'Only board admin can add members' });
+    }
+
+    // Check if user is already a member
+    const existingMembership = await prisma.boardmember.findUnique({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: userId
+        }
+      }
+    });
+
+    if (existingMembership) {
+      return res.status(400).json({ error: 'User is already a member of this board' });
+    }
+
+    // Create board membership
+    const membership = await prisma.boardmember.create({
+      data: {
+        board_id: boardId,
+        user_id: userId
+      }
+    });
+
+    res.status(201).json({
+      message: 'Successfully added member to the board',
+      membership: {
+        boardId: membership.board_id,
+        userId: membership.user_id,
+        joinedAt: membership.joined_at
+      }
+    });
+  } catch (error) {
+    console.error('Error adding board member:', error);
+    res.status(500).json({ error: 'Failed to add board member' });
   }
 });
 
