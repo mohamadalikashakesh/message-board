@@ -10,14 +10,36 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { generalLimiter } from './middleware/rateLimiter.js';
 import dotenv from 'dotenv';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+
+const app = express();
 
 dotenv.config();
+
+// CORS configuration 
+// handles Cross-Origin Resource Sharing. It allows to configure which domains are allowed to access server’s resources.
+const corsOptions = {
+  origin: 'https://frontendURL.com', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions)); 
+
+// Helmet configuration (default security headers)
+//secures app by setting several HTTP headers that protect against common web vulnerabilities.
+app.use(helmet()); 
+
+// Morgan configuration 
+//logs HTTP requests, which is especially useful for debugging or tracking requests in production.
+app.use(morgan('dev'));  // Logs requests in a concise format for development
 
 //get the current module's directory in Nodejs modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const app = express();
 
 app.get('/', async (req, res) => {
   res.json({
