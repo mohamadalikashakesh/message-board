@@ -88,14 +88,35 @@ router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
     // Validate input
     const validatedEmail = validateEmail(email);
     const validatedPassword = validatePassword(password);
 
+    // Check if the user is the master user
+    if (validatedEmail === process.env.MASTER_EMAIL) {
+      // For master user, compare with plain text password from env
+      if (validatedPassword !== process.env.MASTER_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid master credentials' });
+      }
+
+      // Create master user data without database entry
+      const userData = {
+        userId: 'master',
+        email: validatedEmail,
+        role: 'master',
+        displayName: 'Master User',
+        isBoardAdmin: true
+      };
+
+      const token = generateToken(userData);
+      return res.json({
+        message: 'Master login successful',
+        token,
+        user: userData
+      });
+    }
+
+    // For regular users, use database and bcrypt comparison
     const account = await prisma.account.findFirst({
       where: { email: validatedEmail },
       include: {
@@ -127,7 +148,6 @@ router.post('/login', authLimiter, async (req, res) => {
       isBoardAdmin
     };
 
-    //authenticating
     const token = generateToken(userData);
 
     res.json({
@@ -136,69 +156,8 @@ router.post('/login', authLimiter, async (req, res) => {
       user: userData
     });
 
-    // Error Handling
   } catch (error) {
     console.error('Login error:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
-  }
-});
-
-/**
- * Master User Login
- * POST /api/auth/master/login
- */
-router.post('/master/login', authLimiter, async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // Validate input
-    const validatedEmail = validateEmail(email);
-    const validatedPassword = validatePassword(password);
-
-    // Check if the email matches the master email
-    if (validatedEmail !== process.env.MASTER_EMAIL) {
-      return res.status(401).json({ error: 'Invalid master credentials' });
-    }
-
-    const account = await prisma.account.findFirst({
-      where: { 
-        email: validatedEmail,
-        role: 'admin'  // Master user has admin role
-      },
-      include: {
-        user: true
-      }
-    });
-
-    if (!account) {
-      return res.status(401).json({ error: 'Invalid master credentials' });
-    }
-
-    const isValidPassword = await bcrypt.compare(validatedPassword, account.pass);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid master credentials' });
-    }
-
-    const userData = {
-      userId: account.user_id,
-      email: account.email,
-      role: 'admin',  // Return admin role
-      displayName: account.user.user_name
-    };
-
-    const token = generateToken(userData);
-
-    res.json({
-      message: 'Master login successful',
-      token,
-      user: userData
-    });
-  } catch (error) {
-    console.error('Master login error:', error);
     res.status(400).json({ error: error.message || 'Invalid input data' });
   }
 });
