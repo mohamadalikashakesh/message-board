@@ -90,3 +90,7 @@ Authorization: Bearer {{authToken}}
 
 ### Get all boards
 GET {{baseUrl}}/boards
+
+### Join a board (requires authentication)
+POST {{baseUrl}}/boards/17/join
+Authorization: Bearer {{authToken}}

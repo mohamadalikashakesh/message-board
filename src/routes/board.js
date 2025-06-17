@@ -141,4 +141,58 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * Join a board
+ * POST /api/boards/:boardId/join
+ */
+router.post('/:boardId/join', authenticateToken, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    if (isNaN(boardId)) {
+      return res.status(400).json({ error: 'Invalid board ID' });
+    }
+
+    // Check if board exists and is active
+    const board = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+    // Check if user is already a member
+    const existingMembership = await prisma.boardmember.findUnique({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: req.user.userId
+        }
+      }
+    });
+
+    if (existingMembership) {
+      return res.status(400).json({ error: 'You are already a member of this board' });
+    }
+    // Create board membership
+    const membership = await prisma.boardmember.create({
+      data: {
+        board_id: boardId,
+        user_id: req.user.userId
+      }
+    });
+
+    res.status(201).json({
+      message: 'Successfully joined the board',
+      membership: {
+        boardId: membership.board_id,
+        userId: membership.user_id,
+        joinedAt: membership.joined_at
+      }
+    });
+  } catch (error) {
+    console.error('Error joining board:', error);
+    res.status(500).json({ error: 'Failed to join board' });
+  }
+});
+
 export default router;
