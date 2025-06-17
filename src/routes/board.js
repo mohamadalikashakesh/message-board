@@ -195,4 +195,58 @@ router.post('/:boardId/join', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Leave a board
+ * DELETE /api/boards/:boardId/join
+ */
+router.delete('/:boardId/join', authenticateToken, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    if (isNaN(boardId)) {
+      return res.status(400).json({ error: 'Invalid board ID' });
+    }
+
+    // Check if board exists
+    const board = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    // Check if user is a member
+    const membership = await prisma.boardmember.findUnique({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: req.user.userId
+        }
+      }
+    });
+
+    if (!membership) {
+      return res.status(400).json({ error: 'You are not a member of this board' });
+    }
+
+    // Delete board membership
+    await prisma.boardmember.delete({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: req.user.userId
+        }
+      }
+    });
+
+    res.json({
+      message: 'Successfully left the board',
+      boardId: boardId
+    });
+  } catch (error) {
+    console.error('Error leaving board:', error);
+    res.status(500).json({ error: 'Failed to leave board' });
+  }
+});
+
 export default router;

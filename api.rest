@@ -1,16 +1,17 @@
 @baseUrl = http://localhost:3000/api
 @authToken = {{login.response.body.token}}
 @masterToken = {{masterLogin.response.body.token}}
+
 ### Register a new user
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "test3@example.com",
-    "password": "Password1234",
+    "email": "test5@example.com",
+    "password": "Password12345",
     "displayName": "Test User",
     "dateOfBirth": "2000-01-01",
-    "country": "Beirut"
+    "country": "Saida"
 }
 
 ### Login with registered user
@@ -93,4 +94,8 @@ GET {{baseUrl}}/boards
 
 ### Join a board (requires authentication)
 POST {{baseUrl}}/boards/17/join
+Authorization: Bearer {{authToken}}
+
+### Leave a board (requires authentication)
+DELETE {{baseUrl}}/boards/17/join
 Authorization: Bearer {{authToken}}
