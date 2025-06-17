@@ -1,12 +1,12 @@
 @baseUrl = http://localhost:3000/api
-
+@authToken = {{login.response.body.token}}
 
 ### Register a new user
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "test3@example.com",
+    "email": "test@example.com",
     "password": "Password123",
     "displayName": "Test User",
     "dateOfBirth": "2000-01-01",
@@ -19,6 +19,30 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test3@example.com",
+    "email": "test@example.com",
     "password": "Password123"
+}
+### Get current user profile (requires authentication)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+
+### Update user profile (requires authentication)
+PUT {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "displayName": "Updated Name",
+    "password": "new updated password",
+    "country": "Beirut"
+}
+
+### Master user login
+# @name masterLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "master@example.com",
+    "password": "Master123"
 }
