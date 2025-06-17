@@ -54,3 +54,13 @@ Authorization: Bearer {{masterToken}}
 PUT {{baseUrl}}/master/users/9
 Authorization: Bearer {{masterToken}}
 Content-Type: application/json
+
+{
+    "userId": "9",
+    "email": "email@updatedby.master",
+    "role": "user",
+    "displayName": "by mr master",
+    "country": "Jbeil",
+    "password": "masterChangedPa33",
+    "dateOfBirth": "2025-05-05"
+}

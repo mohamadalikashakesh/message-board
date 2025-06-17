@@ -79,7 +79,7 @@ router.get('/users', masterAuth, async (req, res) => {
 router.put('/users/:userId', masterAuth, async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
-    const { displayName, email, country, dateOfBirth, role } = req.body;
+    const { displayName, pass, email, country, dateOfBirth, role } = req.body;
 
     if (isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid user ID' });
@@ -94,6 +94,7 @@ router.put('/users/:userId', masterAuth, async (req, res) => {
           update: {
             user_name: displayName,
             country,
+            pass,
             dob: dateOfBirth ? new Date(dateOfBirth) : undefined
           }
         }
@@ -111,6 +112,7 @@ router.put('/users/:userId', masterAuth, async (req, res) => {
         role: user.role,
         displayName: user.user.user_name,
         country: user.user.country,
+        password: user.pass,
         dateOfBirth: user.user.dob
       }
     });
