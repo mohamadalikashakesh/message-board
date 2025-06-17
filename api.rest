@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 @authToken = {{login.response.body.token}}
-
+@masterToken = {{masterLogin.response.body.token}}
 ### Register a new user
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
@@ -46,3 +46,11 @@ Content-Type: application/json
     "email": "master@example.com",
     "password": "Master123"
 }
+### Get all users (requires master access)
+GET {{baseUrl}}/master/users
+Authorization: Bearer {{masterToken}}
+
+### Update user profile (requires master access)
+PUT {{baseUrl}}/master/users/9
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
