@@ -1,11 +1,4 @@
-// import express from 'express';
-// import { prisma } from '../config/index.js';
-// import bcrypt from 'bcrypt';
-// import { authLimiter } from '../middleware/rateLimiter.js';
-// import { authenticateToken, generateToken } from '../middleware/auth.js';
 
-
-// Validation functions
 /**
  * Validates an email address
  * @param {string} email - The email to validate
@@ -128,4 +121,3 @@ export function calculateAge(dateOfBirth) {
   
   return age;
 }
-

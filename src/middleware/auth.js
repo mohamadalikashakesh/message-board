@@ -1,16 +1,13 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
 app.use(express.json())
 
 //Generate JWT token
 const generateToken = (userData) => {
-  return jwt.sign(userData, process.env.JWT_SECRET || 'your-secret-key');
+  return jwt.sign(userData, process.env.JWT_SECRET );
 };
 
 //Base authentication middleware
@@ -24,7 +21,7 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Authentication token required' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET );
     req.user = decoded;
     next();
   } catch (error) {
@@ -45,5 +42,6 @@ export const requireRole = (role) => {
     next();
   };
 };
+
 
 export { generateToken }; 
