@@ -64,3 +64,26 @@ Content-Type: application/json
     "password": "masterChangedPa33",
     "dateOfBirth": "2025-05-05"
 }
+### Create a new board (requires authentication)
+POST {{baseUrl}}/boards
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "My Board",
+    "description": "A test board",
+    "isPrivate": false
+}
+### Update a board (requires board admin)
+PUT {{baseUrl}}/boards/11
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "Updated Board",
+    "description": "Updated description",
+    "isPrivate": true
+}
+### Delete a board (requires board admin)
+DELETE {{baseUrl}}/boards/11
+Authorization: Bearer {{authToken}}
