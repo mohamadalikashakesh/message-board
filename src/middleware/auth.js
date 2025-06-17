@@ -43,5 +43,28 @@ export const requireRole = (role) => {
   };
 };
 
+// Master user authentication middleware
+export const masterAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication token required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.email !== process.env.MASTER_EMAIL) {
+      return res.status(403).json({ error: 'Master access required' });
+    }
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
 
 export { generateToken }; 
