@@ -66,5 +66,37 @@ export const masterAuth = async (req, res, next) => {
   }
 };
 
+// checks whether the user making the request has the permissions to modify board
+export const requireBoardAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const boardId = parseInt(req.params.boardId);
+    if (isNaN(boardId)) {
+      return res.status(400).json({ error: 'Invalid board ID' });
+    }
+
+    const board = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    if (board.board_admin !== req.user.userId && req.user.role !== 'master') {
+      return res.status(403).json({ error: 'Only board admin can perform this action' });
+    }
+
+    req.board = board;
+    next();
+  } catch (error) {
+    console.error('Board admin check error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 export { generateToken }; 
