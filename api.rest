@@ -6,11 +6,11 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "test@example.com",
-    "password": "Password123",
+    "email": "test3@example.com",
+    "password": "Password1234",
     "displayName": "Test User",
     "dateOfBirth": "2000-01-01",
-    "country": "Lebanon"
+    "country": "Beirut"
 }
 
 ### Login with registered user
@@ -19,8 +19,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test@example.com",
-    "password": "Password123"
+    "email": "test3@example.com",
+    "password": "Password1234"
 }
 ### Get current user profile (requires authentication)
 GET {{baseUrl}}/auth/me
@@ -70,7 +70,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "title": "My Board",
+    "title": "Board 2",
     "description": "A test board",
     "isPrivate": false
 }
@@ -87,3 +87,6 @@ Content-Type: application/json
 ### Delete a board (requires board admin)
 DELETE {{baseUrl}}/boards/11
 Authorization: Bearer {{authToken}}
+
+### Get all boards
+GET {{baseUrl}}/boards

@@ -104,27 +104,41 @@ router.delete('/:boardId', authenticateToken, requireBoardAdmin, async (req, res
   }
 });
 
+/**
+ * Get all available boards
+ * GET /api/boards
+ */
+router.get('/', async (req, res) => {
+  try {
+    const boards = await prisma.board.findMany({
+      where: {
+        status: 'active'
+      },
+      orderBy: {
+        board_id: 'desc'
+      },
+      select: {
+        board_id: true,
+        board_name: true,
+        board_public: true,
+        status: true,
+        board_admin: true
+      }
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    res.json({
+      boards: boards.map(board => ({
+        id: board.board_id,
+        title: board.board_name,
+        isPrivate: !board.board_public,
+        status: board.status,
+        adminId: board.board_admin
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching boards:', error);
+    res.status(500).json({ error: 'Failed to fetch boards' });
+  }
+});
 
 export default router;
