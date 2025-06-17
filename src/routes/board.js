@@ -249,4 +249,46 @@ router.delete('/:boardId/join', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Get all boards that the user has joined
+ * GET /api/boards/joined
+ */
+router.get('/joined', authenticateToken, async (req, res) => {
+  try {
+    const joinedBoards = await prisma.boardmember.findMany({
+      where: {
+        user_id: req.user.userId
+      },
+      include: {
+        board: {
+          select: {
+            board_id: true,
+            board_name: true,
+            board_public: true,
+            status: true,
+            board_admin: true
+          }
+        }
+      },
+      orderBy: {
+        joined_at: 'desc'
+      }
+    });
+
+    res.json({
+      boards: joinedBoards.map(membership => ({
+        id: membership.board.board_id,
+        title: membership.board.board_name,
+        isPrivate: !membership.board.board_public,
+        status: membership.board.status,
+        adminId: membership.board.board_admin,
+        joinedAt: membership.joined_at
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching joined boards:', error);
+    res.status(500).json({ error: 'Failed to fetch joined boards' });
+  }
+});
+
 export default router;

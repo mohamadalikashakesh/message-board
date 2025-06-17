@@ -99,3 +99,7 @@ Authorization: Bearer {{authToken}}
 ### Leave a board (requires authentication)
 DELETE {{baseUrl}}/boards/17/join
 Authorization: Bearer {{authToken}}
+
+### Get all boards that the user has joined (requires authentication)
+GET {{baseUrl}}/boards/joined
+Authorization: Bearer {{authToken}}
