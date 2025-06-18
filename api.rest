@@ -179,3 +179,14 @@ Authorization: Bearer {{authToken}}
 ### Get messages from a specific board
 GET {{baseUrl}}/messages/8
 Authorization: Bearer {{authToken}}
+
+### Create a new message
+POST {{baseUrl}}/messages
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "boardId": 13,
+  "messageText": "new message 3.",
+  "userIds": ""
+}

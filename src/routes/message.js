@@ -79,5 +79,44 @@ router.get('/:boardId', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Create a new message on a board
+ * POST /api/messages
+ */
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { boardId, messageText, userIds } = createMessageSchema.parse(req.body);
+
+    const accessCheck = await checkBoardAccess(boardId, req.user.userId);
+    if (accessCheck.error) return res.status(accessCheck.status).json({ error: accessCheck.error });
+
+    const message = await prisma.message.create({
+      data: {
+        board_id: boardId,
+        user_ids: userIds,
+        admin_id: req.user.userId,
+        message_text: messageText
+      },
+      include: {
+        account: { select: { user: { select: { user_name: true, country: true } } } }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Message posted successfully',
+      data: { ...formatMessage(message), boardId: message.board_id }
+    });
+  } catch (error) {
+    console.error('Error creating message:', error);
+    if (error.name === 'ZodError') {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: error.errors.map(err => ({ field: err.path.join('.'), message: err.message }))
+      });
+    }
+    res.status(500).json({ error: 'Failed to create message' });
+  }
+});
+
 
 export default router; 
