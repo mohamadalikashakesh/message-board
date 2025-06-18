@@ -109,7 +109,7 @@ router.delete('/:boardId', authenticateToken, requireBoardAdmin, async (req, res
  * Get all available boards
  * GET /api/boards
  */
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
     const boards = await prisma.board.findMany({
       where: {
