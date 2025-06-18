@@ -11,11 +11,11 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "test6@example.com",
-    "password": "Password123456",
+    "email": "test10@example.com",
+    "password": "Password10",
     "displayName": "Test User",
     "dateOfBirth": "2000-01-01",
-    "country": "Saida"
+    "country": "Jounieh"
 }
 
 ### Login with registered user
@@ -24,8 +24,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test3@example.com",
-    "password": "Password1234"
+    "email": "test10@example.com",
+    "password": "Password10"
 }
 ### Get current user profile (requires authentication)
 GET {{baseUrl}}/auth/me
@@ -37,8 +37,8 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "displayName": "Updated Name",
-    "password": "new updated password",
+    "displayName": "Name 10",
+    "password": "Password.10",
     "country": "Beirut"
 }
 
@@ -52,12 +52,12 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "title": "Board 5",
-    "description": "A test board",
+    "title": "Board 10",
+    "description": "A test board 10",
     "isPrivate": false
 }
 ### Update a board (requires board admin)
-PUT {{baseUrl}}/boards/20
+PUT {{baseUrl}}/boards/21
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -67,7 +67,7 @@ Content-Type: application/json
     "isPrivate": true
 }
 ### Delete a board (requires board admin)
-DELETE {{baseUrl}}/boards/11
+DELETE {{baseUrl}}/boards/13
 Authorization: Bearer {{authToken}}
 
 ### Get all boards
@@ -79,7 +79,7 @@ POST {{baseUrl}}/boards/18/join
 Authorization: Bearer {{authToken}}
 
 ### Leave a board (requires authentication)
-DELETE {{baseUrl}}/boards/20/join
+DELETE {{baseUrl}}/boards/18/join
 Authorization: Bearer {{authToken}}
 
 ### Get all boards that the user has joined (requires authentication)
@@ -87,16 +87,16 @@ GET {{baseUrl}}/boards/joined
 Authorization: Bearer {{authToken}}
 
 ### Add member to private board (board admin only)
-POST {{baseUrl}}/boards/19/members
+POST {{baseUrl}}/boards/21/members
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "userId": 10
+    "userId": 14
 }
 
 ### Ban user from board (Board Admin Only)
-POST {{baseUrl}}/boards/18/ban/12
+POST {{baseUrl}}/boards/21/ban/14
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -131,20 +131,20 @@ Authorization: Bearer {{masterToken}}
 Content-Type: application/json
 
 {
-    "userId": "9",
+    "userId": "10",
     "email": "email@updatedby.master",
     "role": "user",
     "displayName": "by mr master",
     "country": "Jbeil",
-    "password": "masterChangedPa33",
-    "dateOfBirth": "2025-05-05"
+    "password": "masterChangePwd",
+    "dateOfBirth": "2025-06-06"
 }
 ### Get all boards (master only)
 GET {{baseUrl}}/master/boards
 Authorization: Bearer {{masterToken}}
 
 ### Update board (master only)(change status to frozen to ban board)
-PUT {{baseUrl}}/master/boards/20
+PUT {{baseUrl}}/master/boards/13
 Authorization: Bearer {{masterToken}}
 Content-Type: application/json
 
@@ -165,9 +165,13 @@ Content-Type: application/json
 }
 
 ### Unban user from board (requires master access)
-DELETE {{baseUrl}}/master/boards/20/ban/10
+DELETE {{baseUrl}}/master/boards/13/ban/10
 Authorization: Bearer {{masterToken}}
 
 # ========================================
 # MESSAGES
 # ========================================
+
+### 2. Get all accessible messages (from public boards and private boards where user is member)
+GET {{baseUrl}}/messages
+Authorization: Bearer {{authToken}}
