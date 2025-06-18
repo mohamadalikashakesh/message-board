@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { prisma } from '../config/index.js';
-import { createMessageSchema, replyMessageSchema, checkBoardAccess, formatMessage } from '../validators/messageValidator.js';
+import { createMessageSchema, replyMessageSchema, checkBoardAccess, checkBoardPostAccess, formatMessage } from '../validators/messageValidator.js';
 
 const router = express.Router();
 
@@ -87,7 +87,7 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { boardId, messageText, userIds } = createMessageSchema.parse(req.body);
 
-    const accessCheck = await checkBoardAccess(boardId, req.user.userId);
+    const accessCheck = await checkBoardPostAccess(boardId, req.user.userId);
     if (accessCheck.error) return res.status(accessCheck.status).json({ error: accessCheck.error });
 
     const message = await prisma.message.create({
@@ -117,6 +117,5 @@ router.post('/', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to create message' });
   }
 });
-
 
 export default router; 

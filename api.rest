@@ -177,16 +177,16 @@ GET {{baseUrl}}/messages
 Authorization: Bearer {{authToken}}
 
 ### Get messages from a specific board
-GET {{baseUrl}}/messages/8
+GET {{baseUrl}}/messages/15
 Authorization: Bearer {{authToken}}
 
-### Create a new message
+### Create a new message (requires membership or admin)
 POST {{baseUrl}}/messages
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "boardId": 13,
-  "messageText": "new message 3.",
+  "boardId": 15,
+  "messageText": "new message 5.",
   "userIds": ""
 }

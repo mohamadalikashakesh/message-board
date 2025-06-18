@@ -1,14 +1,32 @@
 import { z } from 'zod';
 import { prisma } from '../config/index.js';
 
-// Helper function to check board access
+// Helper function to check board access for viewing (allows frozen boards for existing members)
 export const checkBoardAccess = async (boardId, userId) => {
   const board = await prisma.board.findUnique({
     where: { board_id: boardId }
   });
 
   if (!board) return { error: 'Board not found', status: 404 };
-  if (board.status === 'frozen') return { error: 'Cannot access frozen board', status: 403 };
+  
+  // For frozen boards, only existing members can view messages
+  if (board.status === 'frozen') {
+    // Check if user is admin of the frozen board
+    if (board.board_admin === userId) return { board };
+    
+    // Check if user is a member of the frozen board
+    const membership = await prisma.boardmember.findUnique({
+      where: { board_id_user_id: { board_id: boardId, user_id: userId } }
+    });
+    
+    if (!membership) {
+      return { error: 'Cannot view messages from frozen board - you are not a member', status: 403 };
+    }
+    
+    return { board };
+  }
+  
+  // For active boards, normal access rules apply
   if (board.board_public) return { board };
 
   const membership = await prisma.boardmember.findUnique({
@@ -17,6 +35,30 @@ export const checkBoardAccess = async (boardId, userId) => {
 
   if (!membership && board.board_admin !== userId) {
     return { error: 'Access denied to private board', status: 403 };
+  }
+
+  return { board };
+};
+
+// Helper function to check board access for posting (prevents posting on frozen boards)
+export const checkBoardPostAccess = async (boardId, userId) => {
+  const board = await prisma.board.findUnique({
+    where: { board_id: boardId }
+  });
+
+  if (!board) return { error: 'Board not found', status: 404 };
+  if (board.status === 'frozen') return { error: 'Cannot post on frozen board', status: 403 };
+
+  // Check if user is admin of the board
+  if (board.board_admin === userId) return { board };
+
+  // Check if user is a member of the board
+  const membership = await prisma.boardmember.findUnique({
+    where: { board_id_user_id: { board_id: boardId, user_id: userId } }
+  });
+
+  if (!membership) {
+    return { error: 'You must be a member or admin of this board to post messages', status: 403 };
   }
 
   return { board };
