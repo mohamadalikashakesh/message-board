@@ -11,11 +11,11 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "test10@example.com",
-    "password": "Password10",
+    "email": "test11@example.com",
+    "password": "Password11",
     "displayName": "Test User",
     "dateOfBirth": "2000-01-01",
-    "country": "Jounieh"
+    "country": "Zahle"
 }
 
 ### Login with registered user
@@ -24,8 +24,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test10@example.com",
-    "password": "Password10"
+    "email": "test11@example.com",
+    "password": "Password11"
 }
 ### Get current user profile (requires authentication)
 GET {{baseUrl}}/auth/me
@@ -144,15 +144,15 @@ GET {{baseUrl}}/master/boards
 Authorization: Bearer {{masterToken}}
 
 ### Update board (master only)(change status to frozen to ban board)
-PUT {{baseUrl}}/master/boards/13
+PUT {{baseUrl}}/master/boards/18
 Authorization: Bearer {{masterToken}}
 Content-Type: application/json
 
 {
     "name": "banned board",
     "isPublic": true,
-    "status": "frozen",
-    "adminId": 1
+    "status": "active",
+    "adminId": 12
 }
 
 ### Ban user from board (requires master access)
@@ -177,7 +177,7 @@ GET {{baseUrl}}/messages
 Authorization: Bearer {{authToken}}
 
 ### Get messages from a specific board
-GET {{baseUrl}}/messages/15
+GET {{baseUrl}}/messages/18
 Authorization: Bearer {{authToken}}
 
 ### Create a new message (requires membership or admin)
@@ -186,7 +186,16 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "boardId": 15,
+  "boardId": 20,
   "messageText": "new message 5.",
   "userIds": ""
+}
+
+### Reply to a message
+POST {{baseUrl}}/messages/9/reply
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "messageText": "reply on message."
 }

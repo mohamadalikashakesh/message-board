@@ -119,3 +119,56 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 export default router; 
+
+/**
+ * Reply to a specific message
+ * POST /api/messages/:messageId/reply
+ */
+router.post('/:messageId/reply', authenticateToken, async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.messageId);
+    if (isNaN(messageId)) return res.status(400).json({ error: 'Invalid message ID' });
+
+    const { messageText } = replyMessageSchema.parse(req.body);
+
+    const originalMessage = await prisma.message.findUnique({
+      where: { message_id: messageId },
+      include: { board: true }
+    });
+
+    if (!originalMessage) return res.status(404).json({ error: 'Message not found' });
+
+    const accessCheck = await checkBoardAccess(originalMessage.board.board_id, req.user.userId);
+    if (accessCheck.error) return res.status(accessCheck.status).json({ error: accessCheck.error });
+
+    const replyMessage = await prisma.message.create({
+      data: {
+        board_id: originalMessage.board.board_id,
+        user_ids: '',
+        admin_id: req.user.userId,
+        message_text: messageText
+      },
+      include: {
+        account: { select: { user: { select: { user_name: true, country: true } } } }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Reply posted successfully',
+      data: {
+        ...formatMessage(replyMessage),
+        boardId: replyMessage.board_id,
+        replyTo: { id: originalMessage.message_id, text: originalMessage.message_text }
+      }
+    });
+  } catch (error) {
+    console.error('Error creating reply:', error);
+    if (error.name === 'ZodError') {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: error.errors.map(err => ({ field: err.path.join('.'), message: err.message }))
+      });
+    }
+    res.status(500).json({ error: 'Failed to create reply' });
+  }
+});
