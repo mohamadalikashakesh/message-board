@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticateToken, requireBoardAdmin } from '../middleware/auth.js';
-import { validateBoardTitle, validateBoardDescription, validateMessageContent } from '../validators/board.js';
-import { calculateAge } from '../validators/auth.js';
+import { validateBoardTitle, validateBoardDescription, validateMessageContent } from '../validators/boardValidator.js';
+import { calculateAge } from '../validators/authValidator.js';
 import { prisma } from '../config/index.js';
 
 const router = express.Router();

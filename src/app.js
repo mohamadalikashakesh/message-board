@@ -1,8 +1,8 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import authRoutes from './routes/auth.js';
-import boardRoutes from './routes/board.js';
+import authRoutes from './routes/authRoutes.js';
+import boardRoutes from './routes/boardRoutes.js';
 import messageRoutes from './routes/message.js';
 import masterRoutes from './routes/master.js';
 import { errorHandler } from './middleware/errorHandler.js';

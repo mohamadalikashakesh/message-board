@@ -3,7 +3,7 @@ import { prisma } from '../config/index.js';
 import bcrypt from 'bcrypt';
 import { authLimiter } from '../middleware/rateLimiter.js';
 import { authenticateToken, generateToken , requireRole } from '../middleware/auth.js';
-import { validateDisplayName , validateEmail , validatePassword , validateDateOfBirth , calculateAge } from '../validators/auth.js';
+import { validateDisplayName , validateEmail , validatePassword , validateDateOfBirth , calculateAge } from '../validators/authValidator.js';
 
 const router = express.Router();
 
