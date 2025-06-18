@@ -1,6 +1,7 @@
 import express from 'express';
 import { prisma } from '../config/index.js';
 import { masterAuth } from '../middleware/auth.js'
+import { formatMessage } from '../validators/messageValidator.js';
 
 const router = express.Router();
 
@@ -337,6 +338,61 @@ router.delete('/boards/:boardId/ban/:userId', masterAuth, async (req, res) => {
   } catch (error) {
     console.error('Error unbanning user:', error);
     res.status(500).json({ error: 'Failed to unban user' });
+  }
+});
+
+/**
+ * Get all messages (master only)
+ * GET /api/master/messages
+ * Optional query params: boardId, userId, limit, offset
+ */
+router.get('/messages', masterAuth, async (req, res) => {
+  try {
+    const { boardId, userId, limit = 100, offset = 0 } = req.query;
+    const where = {};
+    if (boardId) where.board_id = parseInt(boardId);
+    if (userId) where.admin_id = parseInt(userId);
+
+    const messages = await prisma.message.findMany({
+      where,
+      include: {
+        account: { select: { user: { select: { user_name: true, country: true } } } },
+        board: { select: { board_id: true, board_name: true } }
+      },
+      orderBy: { timestamp: 'desc' },
+      skip: Number(offset),
+      take: Number(limit)
+    });
+
+    res.json(messages.map(msg => ({
+      ...formatMessage(msg),
+      board: msg.board ? { id: msg.board.board_id, name: msg.board.board_name } : undefined
+    })));
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+/**
+ * Delete any message (master only)
+ * DELETE /api/master/messages/:messageId
+ */
+router.delete('/messages/:messageId', masterAuth, async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.messageId);
+    if (isNaN(messageId)) {
+      return res.status(400).json({ error: 'Invalid message ID' });
+    }
+    const message = await prisma.message.findUnique({ where: { message_id: messageId } });
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+    await prisma.message.delete({ where: { message_id: messageId } });
+    res.json({ message: 'Message deleted successfully', messageId });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
   }
 });
 

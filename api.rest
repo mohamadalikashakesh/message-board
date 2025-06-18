@@ -168,6 +168,18 @@ Content-Type: application/json
 DELETE {{baseUrl}}/master/boards/13/ban/10
 Authorization: Bearer {{masterToken}}
 
+### Get all messages
+GET {{baseUrl}}/master/messages
+Authorization: Bearer {{masterToken}}
+
+### Get all messages (optionally filter by boardId, userId, limit, offset)
+GET {{baseUrl}}/master/messages?boardId=178&userId=16&limit=50&offset=0
+Authorization: Bearer {{masterToken}}
+
+### Delete a message by ID
+DELETE {{baseUrl}}/master/messages/123
+Authorization: Bearer {{masterToken}}
+
 # ========================================
 # MESSAGES
 # ========================================

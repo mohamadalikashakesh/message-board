@@ -118,7 +118,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-export default router; 
+export default router;
 
 /**
  * Reply to a specific message
