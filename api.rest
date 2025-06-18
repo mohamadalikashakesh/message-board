@@ -20,8 +20,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test@example.com",
-    "password": "Password123"
+    "email": "test5@example.com",
+    "password": "Password12345"
 }
 ### Get current user profile (requires authentication)
 GET {{baseUrl}}/auth/me
@@ -67,11 +67,11 @@ GET {{baseUrl}}/boards
 Authorization: Bearer {{authToken}}
 
 ### Join a board (requires authentication)
-POST {{baseUrl}}/boards/19/join
+POST {{baseUrl}}/boards/20/join
 Authorization: Bearer {{authToken}}
 
 ### Leave a board (requires authentication)
-DELETE {{baseUrl}}/boards/19/join
+DELETE {{baseUrl}}/boards/20/join
 Authorization: Bearer {{authToken}}
 
 ### Get all boards that the user has joined (requires authentication)

@@ -162,6 +162,14 @@ router.post('/:boardId/join', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Board not found' });
     }
 
+    // Check if board is frozen
+    if (board.status === 'frozen') {
+      return res.status(403).json({ 
+        error: 'Cannot join this board - Board is currently frozen',
+        message: 'This board has been suspended.'
+      });
+    }
+
     // Check if user is already a member
     const existingMembership = await prisma.boardmember.findUnique({
       where: {
