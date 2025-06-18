@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../config/index.js';
+import { prisma } from '../config/index.js';
+
 
 const app = express();
 app.use(express.json())
@@ -22,6 +23,30 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET );
+    
+    // Check if user is banned from any boards
+    const bannedBoards = await prisma.banneduser.findMany({
+      where: { user_id: decoded.userId },
+      include: {
+        board: {
+          select: {
+            board_id: true,
+            board_name: true
+          }
+        }
+      }
+    });
+
+    if (bannedBoards.length > 0) {
+      return res.status(403).json({ 
+        error: 'Access denied - You are banned !',
+        bannedBoards: bannedBoards.map(ban => ({
+          boardId: ban.board.board_id,
+          boardName: ban.board.board_name
+        }))
+      });
+    }
+
     req.user = decoded;
     next();
   } catch (error) {
