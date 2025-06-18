@@ -446,4 +446,108 @@ router.get('/:boardId/members', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Ban user from board (board admin only)
+ * POST /api/boards/:boardId/ban/:userId
+ */
+router.post('/:boardId/ban/:userId', authenticateToken, async (req, res) => {
+  try {
+    const boardId = parseInt(req.params.boardId);
+    const userId = parseInt(req.params.userId);
+    const { reason } = req.body;
+
+    if (isNaN(boardId) || isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid board ID or user ID' });
+    }
+
+    // Check if board exists and user is admin
+    const board = await prisma.board.findUnique({
+      where: { board_id: boardId }
+    });
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    if (board.board_admin !== req.user.userId) {
+      return res.status(403).json({ error: 'Only board admin can ban users' });
+    }
+
+    // Check if user to be banned exists
+    const userToBan = await prisma.user.findUnique({
+      where: { user_id: userId }
+    });
+
+    if (!userToBan) {
+      return res.status(404).json({ error: 'User to ban not found' });
+    }
+
+    // Prevent board admin from banning themselves
+    if (userId === req.user.userId) {
+      return res.status(400).json({ error: 'Board admin cannot ban themselves from their own board' });
+    }
+
+    // Check if user is already banned from this board
+    const existingBan = await prisma.banneduser.findUnique({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: userId
+        }
+      }
+    });
+
+    if (existingBan) {
+      return res.status(400).json({ error: 'User is already banned from this board' });
+    }
+
+    // Check if user is a member of the board
+    const membership = await prisma.boardmember.findUnique({
+      where: {
+        board_id_user_id: {
+          board_id: boardId,
+          user_id: userId
+        }
+      }
+    });
+
+    // Ban the user from the board
+    await prisma.$transaction(async (tx) => {
+      // Add user to banned list
+      await tx.banneduser.create({
+        data: {
+          board_id: boardId,
+          user_id: userId
+        }
+      });
+
+      // Remove user from board members if they were a member
+      if (membership) {
+        await tx.boardmember.delete({
+          where: {
+            board_id_user_id: {
+              board_id: boardId,
+              user_id: userId
+            }
+          }
+        });
+      }
+    });
+
+    res.json({
+      message: 'User banned from board successfully',
+      bannedUser: {
+        userId: userId,
+        userName: userToBan.user_name,
+        boardId: boardId,
+        boardName: board.board_name,
+        reason: reason || 'No reason provided'
+      }
+    });
+  } catch (error) {
+    console.error('Error banning user from board:', error);
+    res.status(500).json({ error: 'Failed to ban user from board' });
+  }
+});
+
 export default router;

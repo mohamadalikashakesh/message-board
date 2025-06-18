@@ -2,6 +2,10 @@
 @authToken = {{login.response.body.token}}
 @masterToken = {{masterLogin.response.body.token}}
 
+# ========================================
+# User Profile 
+# ========================================
+
 ### Register a new user
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
@@ -20,8 +24,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "test5@example.com",
-    "password": "Password12345"
+    "email": "test3@example.com",
+    "password": "Password1234"
 }
 ### Get current user profile (requires authentication)
 GET {{baseUrl}}/auth/me
@@ -37,6 +41,10 @@ Content-Type: application/json
     "password": "new updated password",
     "country": "Beirut"
 }
+
+# ========================================
+# Boards
+# ========================================
 
 ### Create a new board (requires authentication)
 POST {{baseUrl}}/boards
@@ -67,7 +75,7 @@ GET {{baseUrl}}/boards
 Authorization: Bearer {{authToken}}
 
 ### Join a board (requires authentication)
-POST {{baseUrl}}/boards/20/join
+POST {{baseUrl}}/boards/18/join
 Authorization: Bearer {{authToken}}
 
 ### Leave a board (requires authentication)
@@ -87,9 +95,22 @@ Content-Type: application/json
     "userId": 10
 }
 
+### Ban user from board (Board Admin Only)
+POST {{baseUrl}}/boards/18/ban/12
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "reason": "Reason ..."
+}
+
 ### Get board members information (requires board membership)
 GET {{baseUrl}}/boards/19/members
 Authorization: Bearer {{authToken}}
+
+# ========================================
+# Master
+# ========================================
 
 ### Master user login
 # @name masterLogin
@@ -146,3 +167,7 @@ Content-Type: application/json
 ### Unban user from board (requires master access)
 DELETE {{baseUrl}}/master/boards/20/ban/10
 Authorization: Bearer {{masterToken}}
+
+# ========================================
+# MESSAGES
+# ========================================
