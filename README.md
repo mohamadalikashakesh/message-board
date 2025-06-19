@@ -19,6 +19,7 @@ A message board platform built with Node.js, Express, Prisma, and MySQL.
   - @prisma/client
   - prisma (dev)
   - nodemon (dev)
+- **Docker** and **Docker Compose** (optional, for containerized setup)
 
 ## Installation
 1. Clone the repository:
@@ -30,6 +31,31 @@ A message board platform built with Node.js, Express, Prisma, and MySQL.
    ```sh
    npm install
    ```
+
+## Docker & Docker Compose
+You can run the app and MySQL database together using Docker Compose:
+
+1. **Build and start the services:**
+   ```sh
+   docker-compose up --build
+   ```
+   This will build the app image, start the MySQL database, run migrations, and launch the server on [http://localhost:3000](http://localhost:3000).
+
+2. **Stop the services:**
+   ```sh
+   docker-compose down
+   ```
+   Add `-v` to also remove the database volume (all data):
+   ```sh
+   docker-compose down -v
+   ```
+
+3. **Environment Variables:**
+   - You can edit environment variables in `docker-compose.yml` or use a `.env` file (see comments in the compose file).
+   - The database data is persisted in a Docker volume (`db_data`).
+
+4. **Prisma Migrations:**
+   - Migrations are run automatically on container startup.
 
 ## Environment Setup
 Create a `.env` file in the root directory with the following variables:
