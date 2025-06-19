@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  user_id Int          @id
+  email   String       @unique(map: "Account_email_key") @db.VarChar(255)
+  pass    String       @db.VarChar(255)
+  role    account_role @default(user)
+  user    user         @relation(fields: [user_id], references: [user_id], map: "Account_user_id_fkey")
+  board   board[]
+  message message[]
+}
+
+model banneduser {
+  board_id Int
+  user_id  Int
+  board    board @relation(fields: [board_id], references: [board_id], onDelete: Cascade, map: "BannedUser_board_id_fkey")
+  user     user  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "BannedUser_user_id_fkey")
+
+  @@id([board_id, user_id])
+  @@index([user_id], map: "BannedUser_user_id_fkey")
+}
+
+model board {
+  board_id     Int           @id @default(autoincrement())
+  board_name   String        @db.VarChar(255)
+  board_admin  Int
+  board_public Boolean       @default(true)
+  status       board_status  @default(active)
+  banneduser   banneduser[]
+  account      account       @relation(fields: [board_admin], references: [user_id], map: "Board_board_admin_fkey")
+  boardmember  boardmember[]
+  message      message[]
+
+  @@index([board_admin], map: "Board_board_admin_fkey")
+}
+
+model boardmember {
+  board_id  Int
+  user_id   Int
+  joined_at DateTime @default(now())
+  board     board    @relation(fields: [board_id], references: [board_id], onDelete: Cascade, map: "BoardMember_board_id_fkey")
+  user      user     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, map: "BoardMember_user_id_fkey")
+
+  @@id([board_id, user_id])
+  @@index([user_id], map: "BoardMember_user_id_fkey")
+}
+
+model message {
+  message_id   Int      @id @default(autoincrement())
+  board_id     Int
+  user_ids     String
+  admin_id     Int
+  message_text String
+  timestamp    DateTime @default(now())
+  account      account  @relation(fields: [admin_id], references: [user_id], map: "Message_admin_id_fkey")
+  board        board    @relation(fields: [board_id], references: [board_id], map: "Message_board_id_fkey")
+
+  @@index([admin_id], map: "Message_admin_id_fkey")
+  @@index([board_id], map: "Message_board_id_fkey")
+}
+
+model user {
+  user_id     Int           @id @default(autoincrement())
+  user_name   String        @db.VarChar(100)
+  dob         DateTime?
+  country     String?       @db.VarChar(100)
+  account     account?
+  banneduser  banneduser[]
+  boardmember boardmember[]
+}
+
+enum account_role {
+  admin
+  user
+  master
+}
+
+enum board_status {
+  active
+  frozen
+}

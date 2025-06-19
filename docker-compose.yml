@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: messageboard
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    ports:
+      - "3307:3306" 
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Use the same values as in your .env file or override here
+      DATABASE_URL: "mysql://root:rootpassword@localhost:3306/message-forum-db" 
+      JWT_SECRET: "4d85124df4bd62e1e6eb3d0c5e7fb3bbaa820b1e381e6cbd853156d1648a69fdbe109fc9b3c48e6592111f6ce0aa5b56f7b1d64d38b6fc89759d9081b63e57d3"
+      MASTER_EMAIL: "master@example.com"
+      MASTER_PASSWORD: "Master123"
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    # Uncomment if you want to use a .env file for secrets
+    # env_file:
+    #   - .env
+
+volumes:
+  db_data:
+    driver: local 

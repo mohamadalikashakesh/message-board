@@ -1,0 +1,238 @@
+@baseUrl = http://localhost:3000/api
+@authToken = {{login.response.body.token}}
+@masterToken = {{masterLogin.response.body.token}}
+
+# ========================================
+# User Profile 
+# ========================================
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "email": "test11@example.com",
+    "password": "Password11",
+    "displayName": "Test User",
+    "dateOfBirth": "2000-01-01",
+    "country": "Zahle"
+}
+
+### Login with registered user
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "test11@example.com",
+    "password": "Password11"
+}
+
+### Get current user profile (requires authentication)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+
+### Update user profile (requires authentication)
+PUT {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "displayName": "Name 10",
+    "password": "Password.10",
+    "country": "Beirut"
+}
+
+# ========================================
+# Boards
+# ========================================
+
+### Create a new board (requires authentication)
+POST {{baseUrl}}/boards
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "Board 10",
+    "description": "A test board 10",
+    "isPrivate": false
+}
+### Update a board (requires board admin)
+PUT {{baseUrl}}/boards/21
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "new name",
+    "description": "Updated description",
+    "isPrivate": true
+}
+
+### Delete a board (requires board admin)
+DELETE {{baseUrl}}/boards/13
+Authorization: Bearer {{authToken}}
+
+### Get all boards
+GET {{baseUrl}}/boards
+Authorization: Bearer {{authToken}}
+
+### Join a board (requires authentication)
+POST {{baseUrl}}/boards/18/join
+Authorization: Bearer {{authToken}}
+
+### Leave a board (requires authentication)
+DELETE {{baseUrl}}/boards/18/join
+Authorization: Bearer {{authToken}}
+
+### Get all boards that the user has joined (requires authentication)
+GET {{baseUrl}}/boards/joined
+Authorization: Bearer {{authToken}}
+
+### Add member to private board (board admin only)
+POST {{baseUrl}}/boards/21/members
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "userId": 14
+}
+
+### Ban user from board (Board Admin Only)
+POST {{baseUrl}}/boards/21/ban/14
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "reason": "Reason ..."
+}
+
+### Get board members information (requires board membership)
+GET {{baseUrl}}/boards/19/members
+Authorization: Bearer {{authToken}}
+
+# ========================================
+# Master
+# ========================================
+
+### Master user login
+# @name masterLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "master@example.com",
+    "password": "Master123"
+}
+
+### Get all users (requires master access)
+GET {{baseUrl}}/master/users
+Authorization: Bearer {{masterToken}}
+
+### Update user profile (requires master access)
+PUT {{baseUrl}}/master/users/9
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
+
+{
+    "userId": "10",
+    "email": "email@updatedby.master",
+    "role": "user",
+    "displayName": "by mr master",
+    "country": "Jbeil",
+    "password": "masterChangePwd",
+    "dateOfBirth": "2025-06-06"
+}
+
+### Get all boards (master only)
+GET {{baseUrl}}/master/boards
+Authorization: Bearer {{masterToken}}
+
+### Update board (master only)(change status to frozen to ban board)
+PUT {{baseUrl}}/master/boards/18
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
+
+{
+    "name": "banned board",
+    "isPublic": true,
+    "status": "active",
+    "adminId": 12
+}
+
+### Ban user from board (requires master access)
+POST {{baseUrl}}/master/boards/13/ban/10
+Authorization: Bearer {{masterToken}}
+Content-Type: application/json
+
+{
+    "reason": "Violation of community guidelines"
+}
+
+### Unban user from board (requires master access)
+DELETE {{baseUrl}}/master/boards/13/ban/10
+Authorization: Bearer {{masterToken}}
+
+### Get all messages (with pagination)
+GET {{baseUrl}}/master/messages?page=1&limit=3
+Authorization: Bearer {{masterToken}}
+
+### Get all messages (filtered by boardId, userId, with pagination)
+GET {{baseUrl}}/master/messages?boardId=178&userId=16&limit=50&offset=0
+Authorization: Bearer {{masterToken}}
+
+### Delete a message by ID
+DELETE {{baseUrl}}/master/messages/123
+Authorization: Bearer {{masterToken}}
+
+# ========================================
+# MESSAGES
+# ========================================
+
+### Get all accessible messages
+GET {{baseUrl}}/messages
+Authorization: Bearer {{authToken}}
+
+### Get messages from a specific board
+GET {{baseUrl}}/messages/18
+Authorization: Bearer {{authToken}}
+
+### Create a new message (requires membership or admin)
+POST {{baseUrl}}/messages
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "boardId": 20,
+  "messageText": "new message 5.",
+  "userIds": ""
+}
+
+### Reply to a message
+POST {{baseUrl}}/messages/9/reply
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "messageText": "reply on message."
+}
+
+# ========================================
+# Pagination Examples
+# ========================================
+
+### Get first page with 10 boards
+GET {{baseUrl}}/boards?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Get first page with 20 messages from board 18
+GET {{baseUrl}}/messages/18?page=1&limit=20
+Authorization: Bearer {{authToken}}
+
+### Get second page with 10 messages from board 18
+GET {{baseUrl}}/messages/18?page=2&limit=10
+Authorization: Bearer {{authToken}}
+
+### Get first page with 50 messages from board 20
+GET {{baseUrl}}/messages/20?page=1&limit=50
+Authorization: Bearer {{authToken}}
+
