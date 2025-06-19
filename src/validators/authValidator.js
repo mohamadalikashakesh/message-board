@@ -1,4 +1,4 @@
-
+//Traditional Request Validation Replacing with Zod is better approach (must do) 
 /**
  * Validates an email address
  * @param {string} email - The email to validate

@@ -111,21 +111,27 @@ router.delete('/:boardId', authenticateToken, requireBoardAdmin, async (req, res
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const boards = await prisma.board.findMany({
-      where: {
-        status: 'active'
-      },
-      orderBy: {
-        board_id: 'desc'
-      },
-      select: {
-        board_id: true,
-        board_name: true,
-        board_public: true,
-        status: true,
-        board_admin: true
-      }
-    });
+    // Simple pagination
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const [total, boards] = await Promise.all([
+      prisma.board.count({ where: { status: 'active' } }),
+      prisma.board.findMany({
+        where: { status: 'active' },
+        orderBy: { board_id: 'desc' },
+        select: {
+          board_id: true,
+          board_name: true,
+          board_public: true,
+          status: true,
+          board_admin: true
+        },
+        skip,
+        take: limit
+      })
+    ]);
 
     res.json({
       boards: boards.map(board => ({
@@ -134,7 +140,15 @@ router.get('/', authenticateToken, async (req, res) => {
         isPrivate: !board.board_public,
         status: board.status,
         adminId: board.board_admin
-      }))
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
     });
   } catch (error) {
     console.error('Error fetching boards:', error);

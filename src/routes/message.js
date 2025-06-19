@@ -59,19 +59,37 @@ router.get('/:boardId', authenticateToken, async (req, res) => {
     const accessCheck = await checkBoardAccess(boardId, req.user.userId);
     if (accessCheck.error) return res.status(accessCheck.status).json({ error: accessCheck.error });
 
-    const messages = await prisma.message.findMany({
-      where: { board_id: boardId },
-      include: {
-        account: { select: { user: { select: { user_name: true, country: true } } } }
-      },
-      orderBy: { timestamp: 'asc' }
-    });
+    // Simple pagination
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const [total, messages] = await Promise.all([
+      prisma.message.count({ where: { board_id: boardId } }),
+      prisma.message.findMany({
+        where: { board_id: boardId },
+        include: {
+          account: { select: { user: { select: { user_name: true, country: true } } } }
+        },
+        orderBy: { timestamp: 'asc' },
+        skip,
+        take: limit
+      })
+    ]);
 
     res.json({
       boardName: accessCheck.board.board_name,
       boardId: accessCheck.board.board_id,
       isPublic: accessCheck.board.board_public,
-      messages: messages.map(formatMessage)
+      messages: messages.map(formatMessage),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
     });
   } catch (error) {
     console.error('Error fetching messages:', error);
